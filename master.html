@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汉语言文学·一页简历（Edge打印优化）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        /* ========== 打印样式 - 专门针对Edge优化 ========== */
+        @media print {
+            @page {
+                size: A4;
+                margin: 1.2cm 1.2cm 1.2cm 1.2cm;  /* 统一边距，确保内容充满页面 */
+            }
+            
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+                display: block;
+                width: 100%;
+            }
+            
+            .resume-card {
+                max-width: 100%;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                border-radius: 0;
+                background: white;
+                page-break-inside: avoid;
+                break-inside: avoid;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* 确保所有内容强制在一页内 */
+            .resume-grid {
+                page-break-before: avoid;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+            
+            .left-panel, .right-panel {
+                page-break-inside: avoid;
+            }
+            
+            /* 移除交互效果 */
+            [contenteditable="true"]:hover {
+                outline: none;
+                background: transparent;
+            }
+            
+            /* 打印时隐藏上传按钮，只显示照片 */
+            .photo-upload-btn {
+                display: none !important;
+            }
+        }
+
+        /* ========== 屏幕预览样式 (模拟A4比例) ========== */
+        body {
+            background: #e0e7ef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .resume-card {
+            max-width: 900px;  /* 屏幕显示缩小一点便于查看，打印时会用@page规则 */
+            width: 100%;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+
+        /* 头部个人信息 - 调整为flex布局以容纳照片 */
+        .personal-header {
+            padding: 1.2rem 1.5rem 0.3rem 1.5rem;
+            background: white;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .name-line {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 0.6rem 1.5rem;
+            margin-bottom: 0.2rem;
+        }
+        .name-line h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            color: #132b36;
+            letter-spacing: -0.3px;
+            line-height: 1.1;
+        }
+        .name-line .badge {
+            background: #ecf3f9;
+            color: #1b4a5e;
+            padding: 0.2rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .quick-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem 1.5rem;
+            margin-top: 0.3rem;
+            padding: 0.2rem 0;
+            font-size: 0.85rem;
+        }
+        .quick-info .item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #1b4f63;
+        }
+        .quick-info .item span:first-child {
+            font-size: 1rem;
+        }
+
+        /* 照片模块样式 */
+        .photo-module {
+            width: 100px;
+            height: 120px;
+            border: 2px solid #d0e0ed;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            background: #f5f9ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-left: 1.5rem;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .photo-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            color: #7a9eb5;
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .photo-placeholder span {
+            font-size: 2rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .photo-upload-btn {
+            background: #e3eef8;
+            color: #1b4f63;
+            border: none;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-top: 0.2rem;
+            width: 80%;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .photo-upload-btn:hover {
+            background: #cde0f0;
+        }
+
+        #photoInput {
+            display: none;
+        }
+
+        .soft-divider {
+            height: 1px;
+            background: #d0e0ed;
+            margin: 0.4rem 0 0.3rem 0;
+            width: 100%;
+        }
+
+        /* 网格布局 - 两列比例精心调校 */
+        .resume-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;  /* 精准比例确保填满 */
+            gap: 1.2rem;
+            padding: 0.2rem 1.5rem 0.8rem 1.5rem;
+        }
+
+        /* ========= 左侧样式 (紧凑优化) ========= */
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #2d5b70;
+            margin-bottom: 0.5rem;
+            border-bottom: 1.5px solid #d2e2f0;
+            padding-bottom: 0.2rem;
+        }
+
+        .edu-left-item {
+            margin-bottom: 0.5rem;
+        }
+        .edu-left-item .school {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #1c3b48;
+        }
+        .edu-left-item .major {
+            font-weight: 500;
+            color: #366277;
+            margin: 0.1rem 0;
+            font-size: 0.88rem;
+        }
+        .edu-left-item .date {
+            background: #e2eef9;
+            padding: 0.1rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+        .stat-list {
+            list-style: none;
+            margin-top: 0.2rem;
+        }
+        .stat-list li {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 0.2rem;
+            font-size: 0.82rem;
+            color: #194352;
+            line-height: 1.3;
+        }
+        .stat-list li::before {
+            content: "•";
+            color: #3e7b9b;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .honor-item {
+            background: #f4f9ff;
+            border-radius: 12px;
+            padding: 0.4rem 0.8rem;
+            margin-bottom: 0.4rem;
+            font-size: 0.83rem;
+            line-height: 1.3;
+        }
+
+        .cert-item {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            border-bottom: 1px dashed #cee0ed;
+            font-size: 0.82rem;
+        }
+
+        .skill-badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 6px;
+            margin: 0.3rem 0 0.1rem;
+        }
+        .skill-badge {
+            background: #e6f0f8;
+            color: #1a4d62;
+            padding: 0.2rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.76rem;
+            font-weight: 500;
+            border: 1px solid #c8ddec;
+        }
+        .trait-block {
+            background: #f4fafd;
+            border-radius: 12px;
+            padding: 0.5rem 0.8rem;
+            margin: 0.2rem 0;
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        /* ========= 右侧样式 (紧凑优化) ========= */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .exp-item {
+            margin-bottom: 0.7rem;
+        }
+        .exp-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.1rem;
+        }
+        .exp-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #183e4e;
+        }
+        .exp-sub {
+            font-weight: 500;
+            color: #386f88;
+            margin-bottom: 0.1rem;
+            font-size: 0.84rem;
+        }
+        .exp-date {
+            background: #e3eef8;
+            padding: 0.1rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+        .exp-desc {
+            margin-top: 0.2rem;
+            color: #1b4254;
+            font-size: 0.8rem;
+        }
+        .exp-desc ul {
+            list-style: none;
+        }
+        .exp-desc li {
+            margin-bottom: 0.15rem;
+            display: flex;
+            gap: 6px;
+            line-height: 1.35;
+        }
+        .exp-desc li::before {
+            content: "▹";
+            color: #3e7b9b;
+            font-size: 0.9rem;
+        }
+
+        .profile-box {
+            background: #ecf5fc;
+            padding: 0.6rem 1rem;
+            border-radius: 16px;
+            margin-top: 0.1rem;
+            border: 1px solid #d1e2f2;
+            color: #193e50;
+            line-height: 1.4;
+            font-size: 0.82rem;
+        }
+
+        /* 移除所有顶栏底栏元素 */
+        .edit-header, .footer-note, .badge-git, .no-print {
+            display: none;
+        }
+
+        /* 屏幕编辑提示 (不影响打印) */
+        [contenteditable="true"]:hover {
+            background: rgba(180, 210, 230, 0.15);
+            outline: 1px dashed #7aa9c4;
+            cursor: text;
+        }
+    </style>
+</head>
+<body>
+    <div class="resume-card">
+        <!-- 头部信息 - 包含照片模块 -->
+        <div class="personal-header">
+            <div class="header-left">
+                <div class="name-line">
+                    <h1 contenteditable="true">姓名</h1>
+                    <span class="badge" contenteditable="true">本科应届 · 汉语言文学</span>
+                    <span class="badge" contenteditable="true">共青团员</span>
+                </div>
+
+                <div class="quick-info">
+                    <div class="item"><span>📞</span><span contenteditable="true">电话</span></div>
+                    <div class="item"><span>📧</span><span contenteditable="true">邮箱</span></div>
+                    <div class="item"><span>📍</span><span contenteditable="true">湖南 · 长沙</span></div>
+                    <div class="item"><span>🎂</span><span contenteditable="true">生日</span></div>
+                </div>
+            </div>
+            
+            <!-- 照片模块 -->
+            <div class="photo-module" id="photoModule">
+                <img id="photoPreview" class="photo-preview" src="#" alt="证件照">
+                <div class="photo-placeholder" id="photoPlaceholder">
+                    <span>📷</span>
+                    <div>证件照</div>
+                </div>
+                <input type="file" id="photoInput" accept="image/*">
+                <button class="photo-upload-btn" id="uploadBtn" onclick="document.getElementById('photoInput').click()">上传照片</button>
+            </div>
+        </div>
+        <div class="soft-divider"></div>
+
+        <!-- 核心两列布局 -->
+        <div class="resume-grid">
+            <!-- ========= 左侧栏 ========= -->
+            <div class="left-panel">
+                <!-- 教育背景 -->
+                <div class="section">
+                    <div class="section-title" contenteditable="true">🎓 教育背景</div>
+                    <div class="edu-left-item">
+                        <div class="school" contenteditable="true">湖南师范大学</div>
+                        <div class="major" contenteditable="true">汉语言文学 · 本科 (2022.09 – 2026.06)</div>
+                        <span class="date" contenteditable="true">全日制 · 文学院</span>
+                        <ul class="stat-list">
+                            <li contenteditable="true">平均绩点 3.71/4.0 | 专业前20% (156人)</li>
+                            <li contenteditable="true">主修：现代文学86 · 古代文学90 · 古代汉语89 · 文学概论91</li>
+                        </ul>
+                    </div>
+                    <div class="honor-item" contenteditable="true">
+                        <span>🏆 校级奖学金 · 优秀共青团员</span> 
+                        <div style="font-size:0.78rem; margin-top:2px;">2023、2024校级三等奖学金；2024优秀共青团员</div>
+                    </div>
+                </div>
+
+                <!-- 专业证书 -->
+                <div class="section">
+                    <div class="section-title" contenteditable="true">📜 专业证书</div>
+                    <div class="cert-item">
+                        <span contenteditable="true">教师资格证</span>
+                    </div>
+                    <div class="cert-item">
+                        <span contenteditable="true">普通话证书</span>
+                    </div>
+                </div>
+
+                <!-- 教学能力 -->
+                <div class="section">
+                    <div class="section-title" contenteditable="true">🧑‍🏫 教学能力</div>
+                    <div class="skill-badge-container">
+                        <span class="skill-badge" contenteditable="true">教案设计</span>
+                        <span class="skill-badge" contenteditable="true">课堂板书</span>
+                        <span class="skill-badge" contenteditable="true">课件制作</span>
+                        <span class="skill-badge" contenteditable="true">作业批改</span>
+                        <span class="skill-badge" contenteditable="true">班主任管理</span>
+                        <span class="skill-badge" contenteditable="true">家校沟通</span>
+                    </div>
+                </div>
+
+                <!-- 文学素养 -->
+                <div class="section">
+                    <div class="section-title" contenteditable="true">📚 文学素养</div>
+                    <div class="trait-block" contenteditable="true">
+                        扎实的古代/现代文学基础，文本解读与写作能力；熟悉中小学语文课标。
+                    </div>
+                </div>
+                
+                <!-- 办公技能 -->
+                <div class="section">
+                    <div class="section-title" contenteditable="true">💻 办公技能</div>
+                    <div class="skill-badge-container">
+                        <span class="skill-badge" contenteditable="true">Word</span>
+                        <span class="skill-badge" contenteditable="true">Excel</span>
+                        <span class="skill-badge" contenteditable="true">PPT</span>
+                        <span class="skill-badge" contenteditable="true">XMind</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========= 右侧栏 ========= -->
+            <div class="right-panel">
+                <!-- 实习经验 -->
+                <div class="section">
+                    <div class="section-title" contenteditable="true">💼 实习经验</div>
+                    
+                    <div class="exp-item">
+                        <div class="exp-header">
+                            <span class="exp-title" contenteditable="true">作业班老师</span>
+                            <span class="exp-date" contenteditable="true">2025.06-2025.08</span>
+                        </div>
+                        <div class="exp-sub" contenteditable="true">多多乐培训学校</div>
+                        <div class="exp-desc">
+                            <ul>
+                                <li contenteditable="true">负责20余名小学生作业辅导与班级管理，提升学习效率</li>
+                                <li contenteditable="true">归纳讲解常见错题，提升学生专注力与自主学习能力</li>
+                                <li contenteditable="true">与家长反馈学习进度，获家长与校方好评</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="exp-item">
+                        <div class="exp-header">
+                            <span class="exp-title" contenteditable="true">助教</span>
+                            <span class="exp-date" contenteditable="true">2025.10-2025.12</span>
+                        </div>
+                        <div class="exp-sub" contenteditable="true">才而德培训学校</div>
+                        <div class="exp-desc">
+                            <ul>
+                                <li contenteditable="true">协助课堂教学，维护纪律，解答学生疑难</li>
+                                <li contenteditable="true">批改作业并整理错题，辅助教师调整重点</li>
+                                <li contenteditable="true">课后辅导巩固知识点，提升学生学习信心</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="exp-item">
+                        <div class="exp-header">
+                            <span class="exp-title" contenteditable="true">家教（四年级全科）</span>
+                            <span class="exp-date" contenteditable="true">2024.07-2024.08</span>
+                        </div>
+                        <div class="exp-sub" contenteditable="true">一对一辅导</div>
+                        <div class="exp-desc">
+                            <ul>
+                                <li contenteditable="true">针对语数英薄弱点制定个性化学习计划</li>
+                                <li contenteditable="true">阶段性测试+错题复盘，成绩提升明显</li>
+                                <li contenteditable="true">培养学习习惯，增强兴趣与自信</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 校园实践 -->
+                <div class="section">
+                    <div class="section-title" contenteditable="true">📌 实践经验</div>
+                    <div class="exp-item">
+                        <div class="exp-header">
+                            <span class="exp-title" contenteditable="true">岳麓山景区志愿者</span>
+                            <span class="exp-date" contenteditable="true">2024.09-2024.12</span>
+                        </div>
+                        <div class="exp-desc" contenteditable="true">协助景区开展文化讲解工作，向游客介绍历史文化景点，锻炼沟通表达与公众讲解能力；参与读书分享会组织，提升文学鉴赏与协调能力。</div>
+                    </div>
+                </div>
+
+                <!-- 自我评价 -->
+                <div class="section">
+                    <div class="section-title" contenteditable="true">🌟 自我评价</div>
+                    <div class="profile-box" contenteditable="true">
+                        汉语言文学本科，扎实文学功底与表达能力。多次教育实习经验，善于沟通并制定个性化方案。认真负责，热爱教育事业。
+                        <br><span style="font-style:italic;">求职意向：语文教师/教育辅导</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 无底栏 -->
+    </div>
+
+    <script>
+        // 照片上传功能
+        document.getElementById('photoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const photoPreview = document.getElementById('photoPreview');
+                    const photoPlaceholder = document.getElementById('photoPlaceholder');
+                    
+                    photoPreview.src = event.target.result;
+                    photoPreview.style.display = 'block';
+                    photoPlaceholder.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>
